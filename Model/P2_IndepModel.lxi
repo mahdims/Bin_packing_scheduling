@@ -1,0 +1,28 @@
+B 2 C o m p i l a t i o n
+B 137 Include File Summary
+B 151 Equation Listing    SOLVE combination Using MIP From line 96
+D 152 obj1
+D 958 obj2
+D 37101 obj3
+D 37106 c1
+D 37117 c2
+D 37146 c3
+D 37179 c4
+D 37292 c5
+D 37316 summm
+D 37799 cabs
+D 37906 cabsp
+B 37919 Column Listing      SOLVE combination Using MIP From line 96
+E 37920 fv1
+E 37929 fv2
+E 37937 fv3
+E 37944 sumation
+E 37952 up
+E 37971 un
+E 37990 upp
+E 38009 unp
+E 38028 t1
+E 38047 x
+E 38270 y
+E 44256 Ig
+B 44277 Model Statistics    SOLVE combination Using MIP From line 96

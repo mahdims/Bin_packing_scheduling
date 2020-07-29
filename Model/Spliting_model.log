@@ -1,0 +1,33 @@
+
+--- Job Spliting_model.gms Start 06/24/19 21:05:53 24.1.3 r41464 WEX-WEI x86_64/MS Windows
+GAMS 24.1.3   Copyright (C) 1987-2013 GAMS Development. All rights reserved
+Licensee: Gary Goldstein                                 G010614:2121CA-WIN
+          Decision Ware, Inc.                                        DC2807
+--- Starting compilation
+--- Spliting_model.gms(6) 2 Mb
+--- GDXin=G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\Input\Data_5_3_7_Tloose.gdx
+--- Spliting_model.gms(131) 3 Mb 1 Error
+*** Error 250 in G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\Spliting_model.gms
+    Unknown option.  valid are -
+      lp = "lpname" (and for nlp, dnlp, mip, rmip etc)
+      integer1 to integer5    seed
+      limrow  limcol  domlim  iterlim  work (integer values)
+      decimals                              (0..8)
+      optca optcr
+      real1 to real5   reslim  bratio       (real values)
+      measure  eject                        (no values)
+      sysout   solprint                     (on/off)
+      solveopt                              (merge/replace)
+      sparseopt                             (safe/fast)
+      sparserun                             (on/off)
+      "symbol":decimals:rows:columns        (display control)
+      (decimals, rows, columns are integers. Number of
+       displayed decimal places, labels for each row and
+       for each column)
+--- Spliting_model.gms(133) 3 Mb 2 Errors
+*** Error 257 in G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\Spliting_model.gms
+    Solve statement not checked because of previous errors
+--- Spliting_model.gms(144) 3 Mb 2 Errors
+*** Status: Compilation error(s)
+--- Job Spliting_model.gms Stop 06/24/19 21:05:53 elapsed 0:00:00.155
+Exit code = 2

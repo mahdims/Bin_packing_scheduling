@@ -1,0 +1,3 @@
+
+
+execute "gdx2sqlite -i Spliting_model_optimal.gdx -o  Spliting_model_optimal.db" ;    

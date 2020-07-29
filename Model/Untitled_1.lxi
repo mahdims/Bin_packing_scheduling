@@ -1,0 +1,77 @@
+B 2 C o m p i l a t i o n
+B 136 Include File Summary
+B 150 Equation Listing    SOLVE spliting Using MINLP From line 109
+D 151 obj
+D 157 c1
+D 168 c2
+D 179 c2_2
+D 190 c2_3
+D 207 c3
+D 221 c4
+D 238 c5
+D 258 c6
+D 275 c7
+D 292 c8
+D 303 c9_2
+D 342 c13
+D 354 c14
+D 365 c15
+D 379 c16
+D 420 c17
+D 465 c18
+D 476 c19
+D 493 c20
+D 513 c21
+D 524 c22
+B 537 Column Listing      SOLVE spliting Using MINLP From line 109
+E 538 BQ
+E 576 objV
+E 583 alpha
+E 649 beta
+E 687 gamma
+E 785 a
+E 810 b
+E 832 x
+E 866 o
+E 915 y
+E 949 tp
+E 968 tn
+B 993 Model Statistics    SOLVE spliting Using MINLP From line 109
+B 1011 Solution Report     SOLVE spliting Using MINLP From line 109
+F 1062 obj
+F 1068 c1
+F 1078 c2
+F 1108 c2_2
+F 1129 c2_3
+F 1139 c3
+F 1148 c4
+F 1158 c5
+F 1173 c6
+F 1190 c7
+F 1200 c8
+F 1210 c9_2
+F 1219 c13
+F 1227 c14
+F 1237 c15
+F 1617 c16
+F 1647 c17
+F 1702 c18
+F 1709 c19
+F 1719 c20
+F 1729 c21
+F 1739 c22
+G 1744 BQ
+G 1754 objV
+G 1758 alpha
+G 1788 beta
+G 1818 gamma
+G 1838 a
+G 2218 b
+G 2273 x
+G 2288 o
+G 2318 y
+G 2328 tp
+G 2338 tn
+B 2356 E x e c u t i o n
+I 2357 q
+I 2364 N
