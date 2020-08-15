@@ -1,9 +1,18 @@
 \Solution compare
 \V1
 \midel
+\.idea
 *.xlsx
 *.rar
 *.pyc
 test.py
 *.gdx
 *.lst
+*.~gm
+*.log
+*.lst
+*.lxi
+*.gpr
+gamslice.txt
+gamslice3.txt
+
