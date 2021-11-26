@@ -4,9 +4,11 @@ from Chromo import Chromo, inbalance_measure,ItemSet
 from lowerbound import lower_bound
 import random
 import time
+import os
 import math
 import numpy as np
-import cPickle as Pick 
+import pickle as Pick
+import pandas as pd
 
 def initialpop(nPop,Data):
    global pop
@@ -16,7 +18,7 @@ def initialpop(nPop,Data):
   
    ### initial heurestics ##
    Value=[0]*Data.N
-   items = ItemSet(Data, Data.items.values() )
+   items = ItemSet(Data, list(Data.items.values()))
    items.Qsort()
    tempBinIt=ItemSet(Data,[ items[0]])
    BN=0
@@ -64,17 +66,17 @@ def mutation(sol,mu):
     gen2change=int(math.ceil(mu*Varsize))
     Value=sol.value
     (Bin_no,Value)=Calc_Bin_No( Value , Data )
-    rnd_value = random.random 
+    rnd_value = random.random()
     if rnd_value <= 0.3 :
         # Swap two items between their bins
-        for  _ in xrange(gen2change):
+        for _ in range(gen2change):
             rep=np.random.choice(Varsize,2,replace=False)
             rep.sort()
             Value= Value[:rep[0]]+[Value[rep[1]]] +Value[rep[0]+1:rep[1]]  +[Value[rep[0]]]+Value[rep[1]+1:]
             
     elif rnd_value <= 0.7 :
         ## change one item bin ##
-        for  _ in xrange(gen2change):
+        for  _ in range(gen2change):
             item2change = np.random.choice(Varsize,replace=False)
             newbin = np.random.randint( Bin_no )
             Value[ item2change ] = newbin
@@ -177,7 +179,7 @@ def Calc_Bin_No(Value,Data):
     Value=np.array(Value)
     for b in range(Num_Bin+1):
         if b in Value:
-            Item_Bin.append( np.array(Data.items.values())[  np.where(Value==b) ] )   
+            Item_Bin.append(np.array(list(Data.items.values()))[np.where(Value == b)])
             Value[[it.ID for it in Item_Bin[-1]]]=i
             i+=1   
     Value=list(Value)
@@ -302,61 +304,69 @@ def GA(Data):
     return current_bestsol
 
 
-
-
-def read_object(FileName,folder):
-    if folder=="Input":
-        path = "G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\%s\%s" %(folder,FileName)
+def read_object(FileName, folder):
+    WD = os.getcwd()
+    if folder == "Input":
+        path = WD + f"/Model/{folder}/{FileName}"
     else:
-        path = "G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\%s\%s_ModelSol" %(folder,FileName)
-    
-    with open(path , 'rb') as input:
-        obj= Pick.load(input)
-    return  obj 
+        path = WD + f"/Model/{folder}/{FileName}_ModelSol"
+
+    with open(path, 'rb') as input:
+        obj = Pick.load(input, encoding="latin1")
+    return obj
+
+
+
+
 
 
 global pop
 global Listofsolutions
- 
 
-### read Execl Data file ####
-### First number in "Input(29,6)"  is the number of item to read from Data2 excel file
-### Second number is the number of planning period days
-#Data=Input( 10  , 2 )
+No_reps = 5
+results = []
 N = 12
-T=3
-rep=6
-for name in ['LO']:
-    print(name)
-    for _ in range(1):
-        FileName="Data_%d_%d_%d_%s" %(N,T,rep,name)
-        Data= read_object(FileName,"Input")
-        
-        Varsize=Data.N
-        Listofsolutions=[]
-        pop=[]
-        # Run the Genetic algorithm 
-        start=time.time()
-        
-        Best_Sol=GA(Data)
-        
-        Runtime=time.time()-start
-        
-        # display the results
-        #print("############### Results ################")
-        #print(FileName)
-        #print("Lower Bound: %s" %lower_bound(Data))
-        #print("Total cost of printing all bins: %s" %Best_Sol.total_cost)
-        #print("Total lateness and earliness: %s" %Best_Sol.early_lateness)
-        #print("Number of Bins: %s" %len(Best_Sol.Bins))
-        #print ("Algorithm Run Time: %s" %Runtime)
-        print('%s  %s'%(str(round(Best_Sol.total_cost,1)), str(round(Runtime,1))) )
-        for i,b in enumerate(pop[0].Bins):
-            Draw_the_Bin(Data,b)
-            #print("Printing Quqntity: %s" %b.quantity)
-            #print("Items quantity: ", [it.q for it in b.items] )
-            #print("IM: %s" %inbalance_measure(b.items) )
-            #print("Revolting Bin= %d" % b.Revolta)
-        
-        
-    
+T = 3
+
+for N in range(6, 17):
+    for name in ['Tlos', 'Tstr']:
+        for rep in [0]: # range(1,2):
+            FileName = "Data_%d_%d_%d_%s" %(N, T, rep, name)
+            Data = read_object(FileName, "Input")
+            Varsize = Data.N
+
+            best_cost = 0
+            Avg_cost = 0
+            Avg_time = 0
+
+            for runs in range(No_reps):
+                Listofsolutions = []
+                pop = []
+                start = time.time()
+                Best_Sol = GA(Data)
+                Runtime = time.time()-start
+                if runs == 0 or Best_Sol.total_cost < best_cost:
+                    best_cost = Best_Sol.total_cost
+                Avg_cost += Best_Sol.total_cost/No_reps
+                Avg_time += Runtime/No_reps
+
+            # display the results
+            #print("############### Results ################")
+            #print(FileName)
+            #print("Lower Bound: %s" %lower_bound(Data))
+            #print("Total cost of printing all bins: %s" %Best_Sol.total_cost)
+            #print("Total lateness and earliness: %s" %Best_Sol.early_lateness)
+            #print("Number of Bins: %s" %len(Best_Sol.Bins))
+            #print ("Algorithm Run Time: %s" %Runtime)
+            print('%d_%d %s %d %s %s %s' % (N, T, name, rep, str(round(best_cost, 1)), str(round(Avg_cost, 1)), str(round(Avg_time, 1))))
+            results.append([N, T, name, rep, round(best_cost, 1), round(Avg_cost, 1), round(Avg_time, 1)])
+            #for i,b in enumerate(pop[0].Bins):
+                #Draw_the_Bin(Data,b)
+                #print("Printing Quqntity: %s" %b.quantity)
+                #print("Items quantity: ", [it.q for it in b.items] )
+                #print("IM: %s" %inbalance_measure(b.items) )
+                #print("Revolting Bin= %d" % b.Revolta)
+
+
+results = pd.DataFrame(results, columns=['N', 'T', 'Mode', 'index', 'B.obj', 'A.obj', 'A.time'])
+results.to_csv("RGA_New.csv")

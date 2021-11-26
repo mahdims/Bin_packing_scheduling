@@ -6,7 +6,7 @@ import math
 import random
 from scipy import stats
 
-def divsorset_gen(Data,Items):
+def RGA_divsorset_gen(Data,Items):
     #RealM=[math.floor(Data.H/it.h) for it in Items] # number of item splits in one column.
     Div_Set=[]
     for it in Items:    
@@ -23,7 +23,6 @@ def One_Bin_Balance(Data,IB_threshold,Item_in_Bin,Revolta):
     
     if Item_in_Bin.inbalance >= IB_threshold:
         Item_in_Bin.Qsort()
-
         itemsList=copy(Item_in_Bin.list)
         #divisorset=[a for a in Data.Possible_Quantities if a >= Item_in_Bin.qmode and a<Item_in_Bin[0].q] 
         #divisorset=[a for a in Data.Possible_Quantities if a<Item_in_Bin[0].q] 
@@ -38,7 +37,7 @@ def One_Bin_Balance(Data,IB_threshold,Item_in_Bin,Revolta):
         for divisor in divisorset:
             items=ItemSet(Data,itemsList)
             for it in itemsList:
-                m,bigest_item_splits=divide(Data,it,divisor)  # split the large quantity item
+                m,bigest_item_splits=RGA_divide(Data,it,divisor)  # split the large quantity item
                 if items.bin_remain_area >= (m-1)*it.area and m!=1 :
                     items.add(bigest_item_splits) # add splits to items
                     items.remove(it) # remove the orginal item
@@ -129,7 +128,7 @@ def split_item_set(Data, IM_goal ,item_set):
     else:
          return (item_set, [])
          
-def divide(Data,Item,divisor):
+def RGA_divide(Data,Item,divisor):
 
     BigNo=Item.q
     m=int(math.ceil(BigNo/float(divisor) ) )
@@ -177,12 +176,13 @@ class day:
     def __init__(self,Data,t):
         self.t=t
         self.cap=Data.proCap
-        self.gamma=2/self.cap
+        self.gamma=2/(self.cap+0.00001)
         self.bin2print=[]
+
     def addBin(self,Bin):
         self.bin2print.append(Bin)
         self.cap-=Bin.quantity
-        self.gamma=2/self.cap
+        self.gamma=2/(self.cap+0.00001)
 
 class ItemSet:
     def __init__(self,Data,List):
@@ -211,7 +211,7 @@ class ItemSet:
             self.bin_remain_area+= item.w*item.h
         else:
             self.qmode=0
-            self.inbalance==0
+            self.inbalance=0
             self.bin_remain_area+= item.w*item.h
             
     def add(self,items):
@@ -342,7 +342,7 @@ class Bin:
         self.items.remove(it)  
         self.remain_space+=it.h*it.w
         self.utility=1-(self.remain_space/(self.h*self.w))   
-        if it.q==self.quantity*(1+self.Revolta):
+        if it.q==self.quantity*(1+self.Revolta) and self.items:
             self.quantity=max([i.q for i in self.items])*(1/2*(2-self.Revolta))
         # where the item was? \\which level
         for le in self.levels:
@@ -380,7 +380,7 @@ class Chromo:
         Item_in_Bin=[]
         for b in range(Current_BinNO+1):
             if b in self.value:
-                Item_in_Bin.append(np.array(Data.items.values())[  np.where(np.array(self.value)==b) ])
+                Item_in_Bin.append(np.array(list(Data.items.values()))[  np.where(np.array(self.value)==b) ])
         
         if len(Item_in_Bin)==BinNO: # if the current number of bins is already BinNO we do not need run the following lines
             
@@ -513,7 +513,7 @@ class Chromo:
         
         check=[]
         for b in range(Num_Bin+1):
-            Item_in_Bin=np.array(Data.items.values())[  np.where(np.array(self.value)==b) ]
+            Item_in_Bin=np.array(list(Data.items.values()))[  np.where(np.array(self.value)==b) ]
             check.append([it.ID for it in Item_in_Bin])
             Unassigns=self.Create_balanced_bins(Data,Unassigned_items,Item_in_Bin,self.Revolting[b])  
             Unassigned_items+=Unassigns
@@ -763,12 +763,12 @@ class Chromo:
                 b.printing_weight=np.mean(Printing_weight)
                 # the printing perference of the bin decides when a bin should printed 
                 # we obtain bin printing preference equal to the printing perfernce of the most urgent itme in the bin 
-                b.printing_perferance=Printing_perferance[np.argmax(Printing_weight)]
+                b.printing_preference=Printing_perferance[np.argmax(Printing_weight)]
                 
                 Qi.append( b.printing_weight )
                     
             Bin2assign=np.argmax(Qi)
-            self.days[Bins[Bin2assign].printing_perferance].addBin(Bins[Bin2assign])
+            self.days[Bins[Bin2assign].printing_preference].addBin(Bins[Bin2assign])
             del Bins[Bin2assign]
             
             

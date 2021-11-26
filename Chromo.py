@@ -5,78 +5,89 @@ import numpy as np
 import math
 import random
 from scipy import stats
-def divsorset_gen(Data,Items):
-    #RealM=[math.floor(Data.H/it.h) for it in Items] # number of item splits in one column.
-    Div_Set={}
-    bigset=[]
-    max_ratio=0
-    for it in Items:    
-        RealM=int( math.floor(Data.H*Data.W/it.area) )
-        if math.ceil(it.q/float(RealM)) >= max_ratio:
-            max_ratio=math.ceil(it.q/float(RealM))
-        Div_Set[it.ID] = [ math.ceil(it.q/float(m)) for m in range(2,RealM+1) ]
-        bigset+=Div_Set[it.ID]
-        
-    #Set=[div for div in  Div_Set[minix] if all([div in a for a in Div_Set.values() ])]   
-    bigset=list(set(bigset))
-    bigset.sort()
-    bigset=bigset[bigset.index(max_ratio):]
-    return bigset
 
-def One_Bin_Balance(Data,IB_threshold,Item_in_Bin,Revolta):
-    #### This function ### CHANGE ###    
-    
-    indicator=0
-    Unassigns=[]
-    survive_mode=1
+
+def divsorset_gen(Data, Items):
+
+    Div_Set = {}
+    biggest = []
+    max_ratio = 0
+    for it in Items:
+        RealM = int(math.floor(Data.H*Data.W/it.area))
+        if math.ceil(it.q/float(RealM)) >= max_ratio:
+            max_ratio = math.ceil(it.q/float(RealM))
+        Div_Set[it.ID] = [math.ceil(it.q/float(m)) for m in range(2, RealM+1)]
+        biggest += Div_Set[it.ID]
+        
+    # Set=[div for div in  Div_Set[minix] if all([div in a for a in Div_Set.values() ])]
+    biggest = list(set(biggest))
+    biggest.sort()
+    biggest = biggest[biggest.index(max_ratio):]
+    return biggest
+
+
+def RGA_divsorset_gen(Data, Items):
+    # RealM=[math.floor(Data.H/it.h) for it in Items] # number of item splits in one column.
+    Div_Set = []
+    for it in Items:
+        RealM = int(math.floor(Data.H / it.h))
+        Div_Set += [math.ceil(it.q / float(m)) for m in range(2, RealM + 1)]
+
+    return list(set(Div_Set))
+
+
+def One_Bin_Balance(Data,RGA_flag, IB_threshold, Item_in_Bin, Revolta):
+    indicator = 0
+    Unassigns = []
+    survive_mode = 1
     
     if Item_in_Bin.inbalance > IB_threshold:
         Item_in_Bin.Qsort()
+        itemsList = copy(Item_in_Bin.list)
 
-        itemsList=copy(Item_in_Bin.list)
-        #divisorset=[a for a in Data.Possible_Quantities if a >= Item_in_Bin.qmode and a<Item_in_Bin[0].q]
-        #divisorset=[a for a in Data.Possible_Quantities if a<Item_in_Bin[0].q]   
-        divisorset = divsorset_gen(Data,itemsList)
+        if RGA_flag:
+            divisorset = RGA_divsorset_gen(Data, itemsList)
+        else:
+            divisorset = divsorset_gen(Data, itemsList)
         
-        if len(divisorset)==0 and Item_in_Bin.inbalance!=0:
-            survive_mode=1
-            divisorset=[[Item_in_Bin[-1].q],[Item_in_Bin[0].q/2]]
+        if len(divisorset) == 0 and Item_in_Bin.inbalance != 0:
+            survive_mode = 1
+            divisorset = [[Item_in_Bin[-1].q], [Item_in_Bin[0].q/2]]
             
-        possible_bins=[]
+        possible_bins = []
         for divisor in divisorset:
-            items=ItemSet(Data,itemsList)
+            items = ItemSet(Data, itemsList)
             for it in itemsList:
-                bigest_item_splits=divide(it,divisor)  # split the large quantity item
-                if items.bin_remain_area >= (len(bigest_item_splits)-1)*it.area and len(bigest_item_splits) !=1 :
+
+                if RGA_flag:
+                    bigest_item_splits = RGA_divide(it, divisor)  # split the large quantity item
+                else:
+                    bigest_item_splits = divide(it, divisor)
+
+                if items.bin_remain_area >= (len(bigest_item_splits)-1)*it.area and len(bigest_item_splits) != 1:
                     items.add(bigest_item_splits) # add splits to items
                     items.remove(it) # remove the orginal item
                     items.Qsort() # sort items according to their quantity
-                    
                     # check if really splits can fit in one bin
-                    (Unassigns,Current_Bin )=Chromo.Finite_Best_Fit(Data,np.array(items.list),Revolta) 
+                    Unassigns, Current_Bin = Chromo.Finite_Best_Fit(Data, np.array(items.list), Revolta)
                     
                     if all([it.name == '%s'%it.ID for it in Unassigns]): # check function  to see if there is unassign form the same ID
-                        possible_bins.append( (items.inbalance,items.MaxQ(),Current_Bin,Unassigns) )   
+                        possible_bins.append((items.inbalance, items.MaxQ(), Current_Bin, Unassigns))
                         
-                        if items.MaxQ() ==  Item_in_Bin.qmode and not survive_mode:
+                        if items.MaxQ() == Item_in_Bin.qmode and not survive_mode:
                             Current_Bin.add2list()      
-                            indicator=1
-                            return (indicator,Unassigns)    
-                            
-                                           
-                    else :
+                            indicator = 1
+                            return indicator, Unassigns
+                    else:
                         break
-                    
-                
                 else:
                     break
                 
-        if len(possible_bins) != 0 :
-            Best_Bin = min(possible_bins, key = lambda x: x[1])
+        if len(possible_bins) != 0:
+            Best_Bin = min(possible_bins, key=lambda x: x[1])
             Best_Bin[2].add2list()
-            indicator=1
+            indicator = 1
             Unassigns = Best_Bin[3]
-
         #(Unassigns, Current_Bin )=Chromo.Finite_Best_Fit(Data,np.array(items.list),Revolta)       
         #Current_Bin.add2list() 
         #indicator=1
@@ -147,7 +158,29 @@ def divide(Item,divisor):
     for k,q in enumerate(out):
         out1.append(Item.duplicate(k,q))
     return out1
-    
+
+
+def RGA_divide(Data, Item, divisor):
+    BigNo = Item.q
+    m = int(math.ceil(BigNo / float(divisor)))
+    RealM = int(math.floor(Data.H / Item.h))
+    m = min(m, RealM)
+    if float(BigNo) / m == BigNo / m:
+        Fianl_Qs = [BigNo / m for _ in range(m)]
+    else:
+        Fianl_Qs = [BigNo / m for _ in range(m)]
+        remain = BigNo - sum(Fianl_Qs)
+        Fianl_Qs[-1] += remain
+
+    q = max(Fianl_Qs)
+    m = len(Fianl_Qs)
+    Splits_item = Item.duplicate(m, q)
+    Splits_item.h = m * Item.h
+    Splits_item.area = Splits_item.h * Splits_item.w
+
+    return m, [Splits_item]
+
+
 def Quantity_similarity(Item_Q,Bin_Q): ### CHANGE ###
     indicator=0
     if  Item_Q <= (1+0.2)*Bin_Q:
@@ -169,47 +202,51 @@ def g(item,day,Data):
         return day-item.d
     elif day> item.d+item.l:
         return Data.T
-    
+
+
 class day:
-    def __init__(self,Data,t):
-        self.t=t
-        self.cap=Data.proCap
-        self.gamma=2/self.cap
-        self.bin2print=[]
-    def addBin(self,Bin):
+
+    def __init__(self, Data, t):
+        self.t = t
+        self.cap = Data.proCap
+        self.gamma = 2/(max(0, self.cap)+0.0001)
+        self.bin2print = []
+
+    def addBin(self, Bin):
         self.bin2print.append(Bin)
-        self.cap-=Bin.quantity
-        self.gamma=2/self.cap
+        self.cap -= Bin.quantity
+        self.gamma = 2/(max(0, self.cap) + 0.0001)
+
 
 class ItemSet:
-    def __init__(self,Data,List):
-        self.list=copy(List)
-        self.qmode=stats.mode([it.q for it in List])[0][0]
-        self.inbalance=inbalance_measure( List ) 
-        self.bin_remain_area=Data.W*Data.H-sum([it.w*it.h for it in self.list])  
+    def __init__(self, Data, List):
+        self.list = copy(List)
+        self.qmode = stats.mode([it.q for it in List])[0][0]
+        self.inbalance = inbalance_measure(List)
+        self.bin_remain_area = Data.W*Data.H-sum([it.w*it.h for it in self.list])
 
     def __getitem__(self, position):
         return self.list[position]
         
-    def __len__(self):  ### CHANGE ###
+    def __len__(self):
          return len(self.list)   
          
     def MaxQ(self):
         return max([it.q for it in self.list])
         
     def Qsort(self):
-        self.list=sorted(self.list,key=lambda it:it.q,reverse=True)
+        self.list = sorted(self.list, key=lambda it: it.q, reverse=True)
 
-    def remove(self,item):
+    def remove(self, item):
         self.list.remove(item)
-        if len(self.list)!=0:
-            self.qmode=stats.mode([i.q for i in self.list])[0][0]
-            self.inbalance=inbalance_measure( self.list ) 
-            self.bin_remain_area+= item.w*item.h
+        if len(self.list) != 0:
+            self.qmode = stats.mode([i.q for i in self.list])[0][0]
+            self.inbalance = inbalance_measure( self.list )
+            self.bin_remain_area += item.w*item.h
         else:
-            self.qmode=0
-            self.inbalance==0
-            self.bin_remain_area+= item.w*item.h
+            self.qmode = 0
+            self.inbalance = 0
+            self.bin_remain_area += item.w*item.h
             
     def add(self,items):
         for i in items :
@@ -237,6 +274,7 @@ class stack:
             
 class level:
     level_list=[]
+
     def __init__(self,h,w):
         self.items_list=[]   
         self.remain_space=w*h
@@ -245,10 +283,12 @@ class level:
         self.stacks=[]
         self.remain_width=w
         level.level_list.append(self)
+
     def width_increase(self):
         self.w=self.w*2
         self.remain_width+=self.w/2
         self.remain_space+=(self.w/2)*self.h
+
     def add(self,item):
         assign=0
         self.stacks=sorted(self.stacks,key=lambda x:x.remaining_h,reverse=False)
@@ -267,8 +307,7 @@ class level:
             assign=1
         
         return (assign)
-        
-        
+
     def item_remove(self,item):
         ISlevel_eliminate=0
         
@@ -301,7 +340,9 @@ class level:
         cls.level_list=[]
         
 class Bin:
-    Bin_list=[]
+
+    Bin_list = []
+
     def __init__(self,Binlevel,Data,Revolta):
         self.h=Data.H
         self.w=Data.W/2*(2-Revolta)
@@ -316,22 +357,22 @@ class Bin:
         self.Two_sided_item=None
         self.remain_space=self.h*self.w
         self.add(Binlevel)
+
     def add2list(self):
         Bin.Bin_list.append(self)
     
     def add(self, Binlevel):
         
         self.levels.append(Binlevel)
-        self.remain_h-=Binlevel.h
-        self.items+=Binlevel.items_list
+        self.remain_h -= Binlevel.h
+        self.items += Binlevel.items_list
         self.remain_space-=sum([i.h*i.w for i in Binlevel.items_list])
         self.utility=1-(self.remain_space/(self.h*self.w))    
         self.quantity=max([it.q for it in Binlevel.items_list])*(1/2*(2-self.Revolta))
-        
-        
-    def level_remove(self,Binlevel):
+
+    def level_remove(self, Binlevel):
         self.levels.remove(Binlevel)  
-        self.remain_h+=Binlevel.h
+        self.remain_h += Binlevel.h
         for it in Binlevel.items_list:
             self.item_remove(it)
         
@@ -339,7 +380,7 @@ class Bin:
         self.items.remove(it)  
         self.remain_space+=it.h*it.w
         self.utility=1-(self.remain_space/(self.h*self.w))   
-        if it.q==self.quantity*(1+self.Revolta):
+        if it.q == self.quantity*(1+self.Revolta) and self.items:
             self.quantity=max([i.q for i in self.items])*(1/2*(2-self.Revolta))
         # where the item was? \\which level
         for le in self.levels:
@@ -347,16 +388,18 @@ class Bin:
                 if le.item_remove(it):
                     self.levels.remove(le)
                     self.remain_h+=le.h
-                
-            
+
     @classmethod
     def reset(cls):
         cls.Bin_list=[]        
 
+
 class Chromo:
 
+    def __init__(self, Pars,value, Revolting):
 
-    def __init__(self, value,Revolting ):
+        self.RGA_flag = Pars.RGA_flag
+        self.IM = Pars.IM
         self.value = value
         self.Revolting=Revolting
         self.Fitness_Value = None
@@ -368,61 +411,55 @@ class Chromo:
         self.Bins=None
         self.Unassigned_items=[]
      
-    def Random_bin_no_change(self,Data): # it is a mutation operator
-        Value=self.value      # for sake of safty not neccesary line   
-        Current_BinNO=max(self.value)
+    def Random_bin_no_change(self, Data): # it is a mutation operator
+        Value = self.value      # for sake of safty not neccesary line
+        Current_BinNO = max(self.value)
         # randomly select the number of the bins
-        BinNO=np.random.randint(Data.MinBinNo,2*Data.MinBinNo)
-
-        Item_in_Bin=[]
+        BinNO = np.random.randint(Data.MinBinNo, 2*Data.MinBinNo)
+        Item_in_Bin = []
         for b in range(Current_BinNO+1):
             if b in self.value:
-                Item_in_Bin.append(np.array(list(Data.items.values()))[  np.where(np.array(self.value)==b) ])
+                Item_in_Bin.append(np.array(list(Data.items.values()))[np.where(np.array(self.value) == b)])
         
-        if len(Item_in_Bin)==BinNO: # if the current number of bins is already BinNO we do not need run the following lines
+        if len(Item_in_Bin) == BinNO: # if the current number of bins is already BinNO we do not need run the following lines
             
             return self.value
-            
-            
-        elif len(Item_in_Bin)>BinNO:
+
+        elif len(Item_in_Bin) > BinNO:
             # we decide on which bin to keep and which bin to omit by the number of items they already have
-            Item_in_Bin=sorted(Item_in_Bin,key=lambda x:len(x),reverse=True)
-            Bins2keep=Item_in_Bin[:BinNO]
-            Bins2omit=Item_in_Bin[BinNO:]
+            Item_in_Bin = sorted(Item_in_Bin, key=lambda x: len(x), reverse=True)
+            Bins2keep = Item_in_Bin[:BinNO]
+            Bins2omit = Item_in_Bin[BinNO:]
             
             #randomly transfer the items in Bins2omit to the bins we want to keep
-            Items2reallocate=np.concatenate(tuple(Bins2omit))
+            Items2reallocate = np.concatenate(tuple(Bins2omit))
             for it in Items2reallocate: 
-                binindex=np.random.randint(BinNO)
-                Bins2keep[binindex]=np.append(Bins2keep[binindex],it)
-            
-            
+                binindex = np.random.randint(BinNO)
+                Bins2keep[binindex] = np.append(Bins2keep[binindex], it)
+
             #Update the self.value according to above changes
-            Value=np.array(self.value)
-            for i,b in enumerate(Bins2keep): 
-                Value[[it.ID for it in b]]=i
-            Value=list(Value)    
-        else :
+            Value = np.array(self.value)
+            for i, b in enumerate(Bins2keep):
+                Value[[it.ID for it in b]] = i
+            Value = list(Value)
+        else:
             NOBins2add = BinNO - len(Item_in_Bin)
-            NewBins=[len(Item_in_Bin) + a for a in range(NOBins2add) ]
+            NewBins = [len(Item_in_Bin) + a for a in range(NOBins2add)]
 
             for NewB in NewBins:
-                for it,b in enumerate(Value):
+                for it, b in enumerate(Value):
                     if random.random() <= 0.4:
-                       Value[it]= NewB
+                       Value[it] = NewB
 
-            
-            
-                
         return Value
         
-    def Fitness_Calc(self, Data,pop,iterationNO,Maxit) :
+    def Fitness_Calc(self, Data, pop, iterationNO):
         # Objective weight
         weight = 1 # just printing cost
         #weight = 0 # just lateness and earliness cost
         #weight=0.5
                 
-        self.Evaluation(Data,iterationNO,Maxit)
+        self.Evaluation(Data, iterationNO)
         #### Update the choromosome value and revolting #### 
         self.value=np.array(self.value)
         Revolting=[]
@@ -475,9 +512,7 @@ class Chromo:
         #self.total_revenue=Total_revenue
         #Total_profit=Total_revenue-Printing_cost
         #Max_profit=Total_revenue-Data.Min_printing_cost
-        
-        
-        
+
         if iterationNO == 1:    
             self.Fitness_Value=weight*(Printing_cost/Data.Min_printing_cost)+ (1-weight)*(float(LT)/(Data.T))
         else:
@@ -501,48 +536,40 @@ class Chromo:
             if any(condition):
                 self.Fitness_Value+=50000*self.Fitness_Value                
                 break
-                    
-                    
-        return(self)        
 
-    def Evaluation(self,Data,iterationNO,Maxit):
+        return self
+
+    def Evaluation(self, Data, iterationNO):
         Unassigned_items=[]
         Num_Bin=max(self.value)
 
         for b in range(Num_Bin+1):
-            Item_in_Bin=np.array(list(Data.items.values()))[  np.where(np.array(self.value)==b) ]
-            Unassigns=self.Create_balanced_bins(Data,Unassigned_items,Item_in_Bin,self.Revolting[b])  
+            Item_in_Bin = np.array(list(Data.items.values()))[  np.where(np.array(self.value)==b) ]
+            Unassigns=self.Create_balanced_bins(Data, Unassigned_items, Item_in_Bin, self.Revolting[b])
             Unassigned_items+=Unassigns
-        
-        
+
         self.Bins=Bin.Bin_list
         Bin.reset()
-        
         self.Corrective_procedure(Data,Unassigned_items)
         
         #### Reduce number of bins if possible ####
         # just use it in even iterations 
         
-        if  float(iterationNO/float(4)).is_integer() :
+        if float(iterationNO/float(4)).is_integer():
             self.Bin_reduction(Data)
                   
         self.Scheduling_routine(Data)
         level.reset()
-        
-        
-    def Create_balanced_bins(self, Data,Unassigns,Item_in_Bin,Revolta) : ## This function is ### CHANGE ###
-        #IM_goal=0.3 # if you want spliting work active is line
-        IM_goal=4 # means without spliting
-        Item_in_Bin=ItemSet(Data,list(Item_in_Bin))
-        
-        (indicator,Unassigns)=One_Bin_Balance(Data,IM_goal,Item_in_Bin,Revolta)
 
+    def Create_balanced_bins(self, Data, Unassigns, Item_in_Bin, Revolta):
 
-        if indicator==0:
-            (Unassigns,Current_Bin )=Chromo.Finite_Best_Fit(Data,np.array(Item_in_Bin.list),Revolta) 
+        Item_in_Bin = ItemSet(Data, list(Item_in_Bin))
+        assert(len(Unassigns) == 0)
+        (indicator,Unassigns) = One_Bin_Balance(Data, self.RGA_flag, self.IM, Item_in_Bin, Revolta)
+
+        if indicator == 0:
+            (Unassigns, Current_Bin) = Chromo.Finite_Best_Fit(Data, np.array(Item_in_Bin.list), Revolta)
             Current_Bin.add2list()
-
-                    
         return Unassigns                   
 
     @classmethod    
@@ -629,15 +656,12 @@ class Chromo:
         
         if  len(Unassigned_items)!=0:
             print("Baaaang!!!")
-        
-       
-    def Item_rearranging(self,Data,Bins2change,OtherBins) :
-        ### CHANGE ###        
-        
-        ### We first try to move levels between bins and then if some items 
-        #still remains we try to move items
+
+    def Item_rearranging(self, Data, Bins2change, OtherBins):
+        # We first try to move levels between bins and then if some items
+        # still remains we try to move items
         for i in Bins2change:
-            levels2move = copy( self.Bins[i].levels )
+            levels2move = copy(self.Bins[i].levels)
             
             ###  Rearranging levels  ###
             for le in levels2move:
@@ -645,33 +669,31 @@ class Chromo:
                 
                 for b in OtherBins:
                     
-                    if le.h <= self.Bins[b].remain_h and le.w <= self.Bins[b].w and Quantity_similarity(Q_of_level,self.Bins[b].quantity): # check the width to make sure that the bin and level are revolta or not 
+                    if le.h <= self.Bins[b].remain_h and le.w <= self.Bins[b].w \
+                            and Quantity_similarity(Q_of_level, self.Bins[b].quantity):
                                                 
                         self.Bins[i].level_remove(le)
                         if le.w<self.Bins[b].w: 
                             le.width_increase()
                         self.Bins[b].add(le)
                         break
-            
-            ### rearranging the items             
+            # rearranging the items
             if len (self.Bins[i].items) != 0:
                 items2reassign = copy(self.Bins[i].items)
                 for it in items2reassign:
-                    assign = 0 # check if item it is assigned somewhere
+                    assign = 0  # check if item it is assigned somewhere
                     for b in OtherBins:
                         if Quantity_similarity(it.q,self.Bins[b].quantity): break 
                         where2try = np.where(np.array([le.remain_space for le in self.Bins[b].levels])>=it.area)[0]
-                        if len(where2try)!=0 and assign == 0:
+                        if len(where2try) != 0 and assign == 0:
                             for j in where2try:
                                 if self.Bins[b].levels[j].add(it):
                                     self.Bins[b].items.append(it)
                                     self.Bins[i].item_remove(it)
                                     assign = 1
                                     break
-                                
-                        
-                         # Existing levels can not accomudate item.
-                         # But bin may have space for a new level
+                        # Existing levels can not accomudate item.
+                        # But bin may have space for a new level
                         if assign == 0 and it.h <= self.Bins[b].remain_h :
                              if it.w <= self.Bins[b].w:
                                 current_level = level(it.h,self.Bins[b].w)
@@ -682,15 +704,13 @@ class Chromo:
                                 
                         if assign == 1: 
                             break        
-        
-    
+
     def Bin_reduction(self,Data):
-        ### CHANGE ###
         # find the bins with utility less than 50% to eliminate
         Min_utility_level = 0.5
         Bins2change = np.where(np.array([b.utility for b in self.Bins])<=Min_utility_level)[0]
         # the bins we want to add itmes to :
-        for b in   Bins2change:      
+        for b in Bins2change:
             OtherBins = np.array(list(set(range(len(self.Bins)))-set(Bins2change)),dtype=int)
             self.Item_rearranging(Data,Bins2change,OtherBins)
         
@@ -726,14 +746,8 @@ class Chromo:
                     self.Bins.remove(b)
                     
             Low_Utility_Bins=np.where(np.array([b.utility for b in self.Bins])<=Min_utility_level)[0]
-                    
-                    
-                
+
     def Scheduling_routine(self,Data):
-        
-        #Check if I consider production capacity....  I did !! 
-        
-        
         for t in range(Data.T): 
             self.days.append(day(Data,t))
   
@@ -759,13 +773,12 @@ class Chromo:
                 
                 
                 b.printing_weight=np.mean(Printing_weight)
-                # the printing perference of the bin decides when a bin should printed 
-                # we obtain bin printing preference equal to the printing perfernce of the most urgent itme in the bin 
-                b.printing_perferance=Printing_perferance[np.argmax(Printing_weight)]
-                
-                Qi.append( b.printing_weight )
+                # the printing preference of the bin decides when a bin should printed
+                # we obtain bin printing preference equal to the printing perfernce of the most urgent item in the bin
+                b.printing_preference = Printing_perferance[np.argmax(Printing_weight)]
+                Qi.append(b.printing_weight)
                     
             Bin2assign=np.argmax(Qi)
-            self.days[Bins[Bin2assign].printing_perferance].addBin(Bins[Bin2assign])
+            self.days[Bins[Bin2assign].printing_preference].addBin(Bins[Bin2assign])
             del Bins[Bin2assign]
 

@@ -491,12 +491,12 @@ class Chromo:
                 b.printing_weight=np.mean(Printing_weight)
                 # the printing perference of the bin decides when a bin should printed 
                 # we obtain bin printing preference equal to the printing perfernce of the most urgent itme in the bin 
-                b.printing_perferance=Printing_perferance[np.argmax(Printing_weight)]
+                b.printing_preference=Printing_perferance[np.argmax(Printing_weight)]
                 
                 Qi.append( b.printing_weight )
                     
             Bin2assign=np.argmax(Qi)
-            self.days[Bins[Bin2assign].printing_perferance].addBin(Bins[Bin2assign])
+            self.days[Bins[Bin2assign].printing_preference].addBin(Bins[Bin2assign])
             del Bins[Bin2assign]
             
             
