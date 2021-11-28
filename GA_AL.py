@@ -1,4 +1,3 @@
-from Draw_the_Bin import Draw_the_Bin
 from Input import Input
 from Chromo import Chromo, inbalance_measure,ItemSet
 from lowerbound import lower_bound
@@ -59,8 +58,8 @@ class GA:
         Revolting = list(np.random.randint(2, size=(1, Num_Bin))[0])
         # check if there is two-sided option
         Revolting = [a*b for a, b in zip(Revolting, self.Bin_can_revolt(Value))]
-        sol = Chromo(self.Pars, Value, Revolting)
-        self.pop.append(sol.Fitness_Calc(self.Data, self.pop, self.iterationNO))
+        sol = Chromo(self.Pars, self.iterationNO, Value, Revolting)
+        self.pop.append(sol.Fitness_Calc(self.Data, self.pop))
         while len(self.pop) < self.nPop:
 
             # Generating Value genes
@@ -76,8 +75,8 @@ class GA:
             Revolting = [a*b for a, b in zip(Revolting, self.Bin_can_revolt(Value))]
 
             if self.Is_solution_new(Value, Revolting):
-                sol = Chromo(self.Pars, Value, Revolting)
-                self.pop.append(sol.Fitness_Calc(self.Data, self.pop, self.iterationNO))
+                sol = Chromo(self.Pars,self.iterationNO, Value, Revolting)
+                self.pop.append(sol.Fitness_Calc(self.Data, self.pop))
 
     def mutation(self, sol):
         ## Mutation for value ##
@@ -117,7 +116,7 @@ class GA:
             Revolting[i] = 1-Revolting[i]
         Revolting = [a*b for a, b in zip(Revolting, self.Bin_can_revolt(Value))]
 
-        return Chromo(self.Pars, Value, Revolting)
+        return Chromo(self.Pars, self.iterationNO,Value, Revolting)
 
     def crossover(self, DadSol, MomSol):
 
@@ -160,7 +159,7 @@ class GA:
 
             child_Rev[i] = [a*b for a, b in zip(child_Rev[i], self.Bin_can_revolt(child_Val[i]))]
 
-            child[i] = Chromo(self.Pars, child_Val[i], child_Rev[i])
+            child[i] = Chromo(self.Pars, self.iterationNO, child_Val[i], child_Rev[i])
 
         return child
 
@@ -247,11 +246,15 @@ class GA:
             if self.Is_solution_new(child2.value, child2.Revolting):
                 children.append(child2)
 
-        children = [x.Fitness_Calc(self.Data, self.pop, self.iterationNO) for x in children]
-        Mutants = [x.Fitness_Calc(self.Data, self.pop, self.iterationNO) for x in Mutants]
+        children = [x.Fitness_Calc(self.Data, self.pop) for x in children]
+        Mutants = [x.Fitness_Calc(self.Data, self.pop) for x in Mutants]
 
         # create the pool
         pool = self.pop[:parents_length]
+        # Since th fitness depend on the iteration number we have to re calculate the fitness for old solutions
+        for sol in pool:
+            sol.Fitness_measure(self.Data.N, self.iterationNO, self.pop)
+
         pool.extend(children)
         pool.extend(Mutants)
         # evaluate the pool

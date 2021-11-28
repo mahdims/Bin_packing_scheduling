@@ -2,8 +2,11 @@ import pandas as pd
 import numpy as np
 import math
 import copy
+
+
 class Item:
     df=[]
+
     def __init__(self,j,i,df):
         self.name="%d" %(i)
         self.ID=j
@@ -24,8 +27,6 @@ class Item:
         self.l=1  
         # can be define diffrently by reading the paper type and determine its cost 
         self.papercost = 0.1325808
-        
-        
         self.orientation_correcting()
         
     def orientation_correcting(self):
@@ -47,7 +48,10 @@ class Item:
         NewItem.name="%d_%d" %(self.ID,k)
         NewItem.q=q
         return NewItem
-        
+
+    def __repr__(self):
+        return f"{self.ID}: {self.name}: {self.q}"
+
 class Input:
     def __init__(self,ItemN,Time):
         # sheet 3 all orders is one sided in sheet 2 we have two sided order 

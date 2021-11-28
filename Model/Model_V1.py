@@ -8,26 +8,30 @@ from Chromo import stack
 from Chromo import level
 from Chromo import Bin
 from Draw_the_Bin import Draw_the_Bin
-import cPickle as Pick
+import pickle as Pick
 import time
 from output import Output
+import os
 
 
 def save_object(obj, filename):
-    with open("G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\Output\%s_ModelSol" %FileName , 'wb') as out:  # Overwrites any existing file.
+    WD = os.getcwd()
+    with open(WD + f"/Model/Output/{filename}_ModelSol", 'wb') as out:  # Overwrites any existing file.
         Pick.dump(obj, out, Pick.HIGHEST_PROTOCOL)
     out.close()
-    
-def read_object(FileName,folder):
-    if folder=="Input":
-        path = "G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\%s\%s" %(folder,FileName)
+
+
+def read_object(filename, folder):
+    WD = os.getcwd()
+    if folder == "Input":
+        path = WD + f"/Model/%s/%s" %(folder, filename)
     else:
-        path = "G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\%s\%s_ModelSol" %(folder,FileName)
+        path = WD + f"/Model/%s/%s_ModelSol" %(folder, filename)
     
-    with open(path , 'rb') as input:
-        obj= Pick.load(input)
+    with open(path, 'rb') as input:
+        obj = Pick.load(input, encoding="latin1")
     input.close()
-    return  obj 
+    return obj
     
 
 def Solve():
@@ -36,11 +40,9 @@ def Solve():
     T=Data.T  
     d=[Data.items[i].d for i in range(N)]
     Qmax=max([Data.items[a].q for a in range(N)])
-    NN=tuplelist( [(i,j) for i in range(N) for j in range(N) if j>=i ] )
+    NN= tuplelist( [(i,j) for i in range(N) for j in range(N) if j>=i ] )
     
-    
-    
-    items=copy(Data.items.values())
+    items=copy(list(Data.items.values()))
     for it in items:
         if it.two_side==0:
             it.q=it.q/2
@@ -249,29 +251,32 @@ def Draw_Bins(Data,alphavv,betavv,gammavv):
     
 N = 12
 T=3
-for rep in [0]:
-    for f in ['ST']:
-        FileName="Data_%d_%d_%d_%s" %(N,T,rep,f)
-        print(FileName)
-        Data= read_object(FileName,"Input")
-        start=time.time()
-        try:
+results= []
+for N in range(14, 17):
+    for name in ['Tlos', 'Tstr']:
+        for rep in [0]:  # range(1,2):
+            FileName="Data_%d_%d_%d_%s" %(N,T,rep,name)
+            print(FileName)
+            Data= read_object(FileName,"Input")
+            start=time.time()
+
             MIP, alpha,beta,gamma,x,P,tp,tn,Revolt=Solve()
-        
-            Draw_Bins(Data,alpha,beta,gamma)
+
+            #Draw_Bins(Data,alpha,beta,gamma)
             runtime=time.time()-start
             print(MIP.objVal,runtime)
             objval = MIP.objVal
             lowerbound = MIP.ObjBound
             lowerbound2 = []
             FileName+="_NoSplit"
-            out=Output([],[],alpha,beta,gamma,x,P,Revolt,objval,lowerbound,lowerbound2,runtime,tn,tp)
-            save_object(out,FileName)
-        except:
-            print("Can't solve %s" %FileName)
-    #print(FileName)
+            #out=Output([],[],alpha,beta,gamma,x,P,Revolt,objval,lowerbound,lowerbound2,runtime,tn,tp)
+            #save_object(out,FileName)
+            results.append([N, T, name, rep, round(objval, 1), round(lowerbound,1), round(runtime, 1)])
     #print("Lower Bound: %s" %lower_bound(Data))
     #print("Total cost of printing all bins: %s" %Best_Sol.total_cost)
     #print("Total lateness and earliness: %s" %Best_Sol.early_lateness)
     #print("Number of Bins: %s" %len(Best_Sol.Bins))
-    #print ("Algorithm Run Time: %s" %Runtime)   
+    #print ("Algorithm Run Time: %s" %Runtime)
+
+results = pd.DataFrame(results, columns=['N', 'T', 'Mode', 'index', 'UB', 'LB', 'Time'])
+results.to_csv("Model_NoSplit_New.csv")

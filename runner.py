@@ -3,6 +3,7 @@ import pandas as pd
 import time
 import pickle as Pick
 from GA_AL import GA
+from Chromo import inbalance_measure
 
 
 class Parameters:
@@ -15,8 +16,9 @@ class Parameters:
         self.CRate = 0.7
         self.MRate = 0.3
         self.mu = 0.25  # Mutation Rate
-        self.IM = 0.3
+        self.IM = 0.3  # Minimum printing quantity balance
         self.sp = 1.8  # parameter in parents selection
+        self.BR_rep = 1  # Bin reduction applied after % iterations
 
 
 def read_object(FileName, folder):
@@ -31,25 +33,45 @@ def read_object(FileName, folder):
     return obj
 
 
+def solution_display(sol, runtime):
+    print("############### Results ################")
+
+    # print("Lower Bound: %s" %lower_bound(Data))
+    print("Total cost of printing all bins: %s" %sol.total_cost)
+    print("Total lateness and earliness: %s" %sol.early_lateness)
+    print("Number of Bins: %s" %len(sol.Bins))
+    print("Algorithm Run Time: %s" %runtime)
+    for i, b in enumerate(sol.Bins):
+        b.Draw()
+        print("Printing Quqntity: %s" %b.quantity)
+        print("Items quantity: ", [it.q for it in b.items] )
+        print("IM: %s" %inbalance_measure(b.items) )
+        print("Revolting Bin= %d" % b.Revolta)
+
+
+def item_name_correction(data):
+
+    for it in data.items.values():
+        it.name = str(it.ID)
+
 
 if __name__ == "__main__":
-
-
     results = []
-    N = 12
+    # N = 12
     T = 3
-    No_reps = 1
-    for N in range(6, 17):
-        for name in ['Tlos', 'Tstr']:
-            for rep in [0]: # range(1,2):
-                FileName = "Data_%d_%d_%d_%s" %(N,T,rep,name)
-                Data = read_object(FileName,"Input")
+    No_reps = 5
+    for N in [8, 11, 14]:  # range(15, 17):
+        for name in ['Tstr']:
+            for rep in [0]:  # range(1,2):
+                FileName = "Data_%d_%d_%d_%s" %(N, T, rep, name)
+                Data = read_object(FileName, "Input")
+                item_name_correction(Data)
                 Pars = Parameters(Data)
+                Pars.RGA_flag = 1
 
                 best_cost = 0
                 Avg_cost = 0
                 Avg_time = 0
-
                 for runs in range(No_reps):
                     Listofsolutions = []
                     pop = []
@@ -60,27 +82,21 @@ if __name__ == "__main__":
 
                     if runs == 0 or Best_Sol.total_cost < best_cost:
                         best_cost = Best_Sol.total_cost
+                        BB_Sol = Best_Sol
                     Avg_cost += Best_Sol.total_cost / No_reps
                     Avg_time += Runtime / No_reps
 
-                    print('%d_%d %s %d %s %s %s' % (
+                print('%d_%d %s %d %s %s %s' % (
                     N, T, name, rep, str(round(best_cost, 1)), str(round(Avg_cost, 1)), str(round(Avg_time, 1))))
-                    results.append([N, T, name, rep, round(best_cost, 1), round(Avg_cost, 1), round(Avg_time, 1)])
+                results.append([N, T, name, rep, round(best_cost, 1), round(Avg_cost, 1), round(Avg_time, 1)])
 
                 # display the results
-                    #print("############### Results ################")
-                    #
-                    #print("Lower Bound: %s" %lower_bound(Data))
-                    #print("Total cost of printing all bins: %s" %Best_Sol.total_cost)
-                    #print("Total lateness and earliness: %s" %Best_Sol.early_lateness)
-                    #print("Number of Bins: %s" %len(Best_Sol.Bins))
-                    #print ("Algorithm Run Time: %s" %Runtime)
-                    # for i,b in enumerate(pop[0].Bins):
-                        # Draw_the_Bin(Data,b)
-                        # print("Printing Quqntity: %s" %b.quantity)
-                        # print("Items quantity: ", [it.q for it in b.items] )
-                        # print("IM: %s" %inbalance_measure(b.items) )
-                        # print("Revolting Bin= %d" % b.Revolta)
+                # solution_display(BB_Sol, Runtime)
 
     results = pd.DataFrame(results, columns=['N', 'T', 'Mode', 'index', 'B.obj', 'A.obj', 'A.time'])
-    results.to_csv("RGA_New.csv")
+    if Pars.RGA_flag:
+        print("RGA")
+        results.to_csv("RGA_New.csv")
+    else:
+        print("UGA")
+        results.to_csv("UGA_New.csv")
