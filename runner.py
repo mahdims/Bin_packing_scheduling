@@ -8,7 +8,7 @@ from Chromo import inbalance_measure
 
 class Parameters:
     def __init__(self, data):
-        self.RGA_flag = 0
+        self.RGA_flag = 1
         self.MaxTime = 3600
         self.nPop = 20 + 3 * int(data.N)
         self.Maxit = 100 + int(data.N)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     results = []
     # N = 12
     T = 3
-    No_reps = 5
+    No_reps = 1
     for N in [8, 11, 14]:  # range(15, 17):
         for name in ['Tstr']:
             for rep in [0]:  # range(1,2):

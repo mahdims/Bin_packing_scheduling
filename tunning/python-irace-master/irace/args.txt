@@ -1,0 +1,1 @@
+['./main.py', '--pop=178', '--cros=0.8', '--mut=0.69', '--datfile', 'c1-1.dat']
