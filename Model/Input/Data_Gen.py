@@ -1,11 +1,11 @@
-
 import pandas as pd
 import numpy as np
 from Input import Input
 from gams import *
 import cPickle as Pick
 
-def read_object(FileName,folder):
+
+def read_object(FileName, folder):
     if folder=="Input":
         path = "G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\%s\%s" %(folder,FileName)
     else:
@@ -33,8 +33,6 @@ def Export_Data_to_Gdx(FileName,Data):
     for i,j in NN:
       if (Data.items[i].w==Data.items[j].w and Data.items[i].h+Data.items[j].h<=Data.H) or i==j:
          alphaNN.append( [ str(i) , str(j) ] )
-         
-      
     
     ws = GamsWorkspace( 	working_directory = "G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\Input")
     db = ws.add_database()
@@ -96,25 +94,23 @@ def Export_Data_to_Gdx(FileName,Data):
     db.export("%s.gdx" %FileName)
 
 
-#Read the big data at first just once!
-df = pd.read_excel('Big_Data.xlsx', sheetname='Sheet1')  
-n=5
-rep=0
-for n in [12]:
-    for rep in [1]:
-    #n=7
-        Pro_Cap_indi=1 # 1 means tight production capacity and 0 means ample capacity
-        Lateness = 2
-        Earliness = 1
-        T=3
-        N_of_items=n
-        
-        Data=Input(N_of_items,T)
-        Data.randomly_select(df,Pro_Cap_indi,Lateness,Earliness)
-        
-        FileName="Data_%d_%d_%d_LO" %(N_of_items,T,rep)
-        #Data  =read_object(FileName,"Input")
-        #Data.Latness=Lateness
-        #FileName="Data_%d_%d_%d_ST" %(N_of_items,T,rep)
-        save_object(Data,FileName)
-        Export_Data_to_Gdx(FileName,Data)
+for T in [3]:
+    for N in [5]:  # [ 7, 10, 13, 15]:
+        for TW in ['WS']:
+            for PC in ["PS"]:
+                for rep in range(1,4):
+                    FileName = 'Data_%d_%d_%s_%s_%d' % (T, N, TW, PC, rep)
+                    Pro_Cap_indi = PC == "PS"  # 1 means tight production capacity and 0 means ample capacity
+                    if TW == 'WL':
+                        Lateness = 2
+                        Earliness = 1
+                    elif TW == "WS":
+                        Lateness = 0
+                        Earliness = 1
+
+                    Data = Input(N, T)
+                    Data.randomly_select(Pro_Cap_indi, Lateness, Earliness)
+
+                    save_object(Data, FileName)
+                    Export_Data_to_Gdx(FileName, Data)
+

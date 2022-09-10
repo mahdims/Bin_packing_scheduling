@@ -1,9 +1,13 @@
 import pandas as pd
 import numpy as np
 import math
+
+
 class Item:
-    df=[]
-    def __init__(self,j,i,df):
+    def __init__(self,j,i):
+        # Read the big data at first just once!
+        df = pd.read_excel('Big_Data.xlsx', sheetname='Sheet1')
+
         self.name="%d" %(i)
         self.ID=j
         self.h=df['H'][i]
@@ -23,8 +27,6 @@ class Item:
         self.l=1  
         # can be define diffrently by reading the paper type and determine its cost 
         self.papercost = 0.1325808
-        
-        
         self.orientation_correcting()
         
     def orientation_correcting(self):
@@ -63,23 +65,20 @@ class Input:
         self.BinCost = 60
         self.papercost= 0.1325808
 
-    def randomly_select(self,df,proCap,Lateness,Earliness): 
-        order_inx=np.random.choice(range(64929),self.N,replace= False)
-        
-        Item.df=df
-        
-        items={}
-        Min_printing_cost=0
-        for j,i in enumerate(order_inx):
-            items[j]=Item(j,i,df)
-            items[j].d=np.random.randint(0,self.T)
-            Min_printing_cost+=(items[j].area/(self.H*self.W))*items[j].papercost*items[j].q
+    def randomly_select(self, proCap, Lateness, Earliness):
+        order_inx = np.random.choice(range(64929), self.N, replace=False)
+        items = {}
+        Min_printing_cost = 0
+        for j, i in enumerate(order_inx):
+            items[j] = Item(j, i)
+            items[j].d = np.random.randint(0, self.T)
+            Min_printing_cost += (items[j].area/(self.H*self.W))*items[j].papercost*items[j].q
             
-        self.items=items
-        MaxPrint=max([it.q for it in self.items.values()])
+        self.items = items
+        MaxPrint = max([it.q for it in self.items.values()])
         
-        self.proCap=int((MaxPrint/2)*proCap+(1-proCap)*MaxPrint)
-        self.MinBinNo=math.ceil((sum([a.area for a in self.items.values()]))/(self.H*self.W))  
-        self.Min_printing_cost=Min_printing_cost+self.BinCost*self.MinBinNo
-        self.Lateness  = Lateness
+        self.proCap = int((MaxPrint/2)*proCap+(1-proCap)*MaxPrint)
+        self.MinBinNo = math.ceil((sum([a.area for a in self.items.values()]))/(self.H*self.W))
+        self.Min_printing_cost = Min_printing_cost+self.BinCost*self.MinBinNo
+        self.Lateness = Lateness
         self.Earliness = Earliness

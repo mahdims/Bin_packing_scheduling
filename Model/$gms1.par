@@ -1,0 +1,23 @@
+I "G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\Spliting_model.gms"
+ER=99
+LO=3
+IDE=1
+A=CE
+WDIR="G:\My Drive\Side Projects\Cutting stock (APA)\Code\Model\"
+PS=0
+PC=3
+PW=80
+DF=0
+TF=0
+LICENSE="C:\Users\generic\Desktop\gamsli\gamslice3.txt"
+CNS=BARON
+DNLP=BARON
+LP=BARON
+MINLP=BARON
+MIP=BARON
+MIQCP=BARON
+NLP=BARON
+QCP=BARON
+RMINLP=BARON
+RMIP=BARON
+RMIQCP=BARON

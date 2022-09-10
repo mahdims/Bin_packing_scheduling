@@ -17,7 +17,7 @@ class GA:
         self.RGA_flag = Pars.RGA_flag
         self.pop = []
         self.Listofsolutions = []
-        self.iterationNO = 0
+        self.iterationNO = 1
 
         self.Maxit = Pars.Maxit
         self.Max_noimprove = Pars.Max_noimprove
@@ -77,6 +77,10 @@ class GA:
             if self.Is_solution_new(Value, Revolting):
                 sol = Chromo(self.Pars,self.iterationNO, Value, Revolting)
                 self.pop.append(sol.Fitness_Calc(self.Data, self.pop))
+
+        for inx in range(len(self.pop)):
+            self.pop[inx].Fitness_measure(self.Varsize, 1, self.pop)
+
 
     def mutation(self, sol):
         ## Mutation for value ##
@@ -251,16 +255,15 @@ class GA:
 
         # create the pool
         pool = self.pop[:parents_length]
-        # Since th fitness depend on the iteration number we have to re calculate the fitness for old solutions
-        for sol in pool:
-            sol.Fitness_measure(self.Data.N, self.iterationNO, self.pop)
-
         pool.extend(children)
         pool.extend(Mutants)
+        # Since th fitness depend on the iteration number we have to re calcuate the fitness for old solution
+        for inx in range(len(pool)):
+            pool[inx].Fitness_measure(self.Data.N, self.iterationNO, self.pop)
         # evaluate the pool
         pool = sorted(pool, key=lambda pool: pool.Fitness_Value, reverse=False)
         # truncate the pool and create the new generation
-        self.pop=pool[0:self.nPop]
+        self.pop = pool[0:self.nPop]
 
         return
 

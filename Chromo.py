@@ -81,7 +81,8 @@ def One_Bin_Balance(Data,RGA_flag, IB_threshold, Item_in_Bin, Revolta):
     indicator = 0
     Unassigns = []
     survive_mode = 1
-    if Item_in_Bin.inbalance > IB_threshold:
+    IB_threshold= 0
+    if Item_in_Bin.inbalance >= IB_threshold :
         Item_in_Bin.Qsort()
         itemsList = copy(Item_in_Bin.list)
 
@@ -95,6 +96,10 @@ def One_Bin_Balance(Data,RGA_flag, IB_threshold, Item_in_Bin, Revolta):
             divisorset = [[Item_in_Bin[-1].q], [Item_in_Bin[0].q/2]]
             
         possible_bins = []
+
+        if len(itemsList) == Data.N and Revolta==1:
+            stop = 0
+
         for divisor in divisorset:
             items = ItemSet(Data, itemsList)
             for it in itemsList:
@@ -114,7 +119,7 @@ def One_Bin_Balance(Data,RGA_flag, IB_threshold, Item_in_Bin, Revolta):
                     Unassigns, Current_Bin = Chromo.Finite_Best_Fit(Data, items.list, Revolta)
 
                     # check to see if there is unassign item split !
-                    if all([it.name == str(it.ID) for it in Unassigns]):
+                    if all([it.name == str(it.ID) for it in Unassigns]) :
                         possible_bins.append((items.inbalance, items.MaxQ(), Current_Bin, Unassigns))
                         
                         if items.MaxQ() == Item_in_Bin.qmode and not survive_mode:
@@ -122,13 +127,15 @@ def One_Bin_Balance(Data,RGA_flag, IB_threshold, Item_in_Bin, Revolta):
                             indicator = 1
                             return indicator, Unassigns
                     else:
-
                         break
+                        #continue
                 else:
                     break
                 
         if len(possible_bins) != 0:
-            Best_Bin = min(possible_bins, key=lambda x: x[1])
+
+            Best_Bin = min(possible_bins, key=lambda x: (x[1], x[0]))
+
             Best_Bin[2].add2list()
             indicator = 1
             Unassigns = Best_Bin[3]
@@ -205,17 +212,6 @@ def inbalance_measure(items):
         return 0
     lst = [it.q for it in items]
     return np.std(lst)/np.mean(lst)
-
-
-def g(item,day,Data):
-    if day<item.d-item.e:
-        return Data.T
-    elif day <=item.d:
-        return item.d-day
-    elif day<= item.d+item.l:
-        return day-item.d
-    elif day> item.d+item.l:
-        return Data.T
 
 
 class day:
@@ -369,11 +365,13 @@ class Bin:
         self.items=[]
         self.printing_weight=None
         self.printing_perferance=None
+        self.P_day= 0
         self.utility=0
         self.Revolta=Revolta
         self.Two_sided_item=None
         self.remain_space=self.h*self.w
         self.add(Binlevel)
+        self.calc_quantity()
 
     def __repr__(self):
         st = ""
@@ -390,8 +388,14 @@ class Bin:
         self.remain_h -= Binlevel.h
         self.items += Binlevel.items_list
         self.remain_space-=sum([i.h*i.w for i in Binlevel.items_list])
-        self.utility=1-(self.remain_space/(self.h*self.w))    
-        self.quantity=max([it.q for it in Binlevel.items_list])*(1/2*(2-self.Revolta))
+        self.utility=1-(self.remain_space/(self.h*self.w))
+        self.calc_quantity()
+
+    def calc_quantity(self):
+        if len(self.items) == 0:
+            self.quantity = 0
+        else:
+            self.quantity = max([it.q for it in self.items])*(1/(1+self.Revolta))
 
     def level_remove(self, Binlevel):
         self.levels.remove(Binlevel)  
@@ -403,8 +407,7 @@ class Bin:
         self.items.remove(it)  
         self.remain_space+=it.h*it.w
         self.utility=1-(self.remain_space/(self.h*self.w))   
-        if it.q == self.quantity*(1+self.Revolta) and self.items:
-            self.quantity=max([i.q for i in self.items])*(1/2*(2-self.Revolta))
+
         # where the item was? \\which level
         for le in self.levels:
             if it in le.items_list:
@@ -412,6 +415,8 @@ class Bin:
                 if le.item_remove(it):
                     self.levels.remove(le)
                     self.remain_h += le.h
+
+        self.calc_quantity()
 
     def Draw(self):
         # Create figure and axes
@@ -474,6 +479,10 @@ class Chromo:
         self.days=[]
         self.Bins=None
         self.Unassigned_items=[]
+
+    def __repr__(self):
+
+        return "Fit: %s TC: %s TL: %s" %(round(self.Fitness_Value,2), round(self.total_cost,1), self.early_lateness)
      
     def Random_bin_no_change(self, Data): # it is a mutation operator
         Value = self.value      # for sake of safty not neccesary line
@@ -563,19 +572,16 @@ class Chromo:
             
             Two_sided_item=any([it.two_side for it in b.items])
             b.Two_sided_item=Two_sided_item
-            
-            if b.Revolta == 0:
-                b.quantity = max([i.q for i in b.items])
-            else:
-                b.quantity = max([i.q/2 for i in b.items])
+
+            b.calc_quantity()
 
         self.early_lateness = LT
         self.total_cost = sum([60*(1 + 1*(1-b.Revolta)*b.Two_sided_item )+b.quantity*papercost for b in self.Bins])
 
-        if self.iterationNO == 1:
-            self.Fitness_Value = (self.total_cost/Data.Min_printing_cost) + (float(LT)/(Data.T))
-        else:
-            self.Fitness_measure(Data.N, self.iterationNO, pop)
+        #if self.iterationNO == 1:
+        #    self.Fitness_Value = (self.total_cost/Data.Min_printing_cost) + (float(LT)/(Data.T))
+        #else:
+        #    self.Fitness_measure(Data.N, self.iterationNO, pop)
             # self.Fitness_Value = weight*(Printing_cost/Data.Min_printing_cost)+ (1-weight)*(float(LT)/(Data.T))
 
         # add penalty cost if split items are not in same bins O(n2)
@@ -820,24 +826,50 @@ class Chromo:
         while len(Bins)!=0:
             Qi=[]
             for b in Bins:
-                
+                if set([ite.ID for ite in b.items]) == set([0,4,3]):
+                    stop = 0
                 sortedIndex=[]
                 Printing_weight=[]
                 Printing_perferance=[]
+                GIT = []
                 for j,it in enumerate(b.items):
-                    GIT=[g(it,t,Data) for t in range(Data.T)]
-                    sortedIndex.append(np.argsort(GIT))
-                    Printing_weight.append(GIT[sortedIndex[j][1]]-GIT[sortedIndex[j][0]])
+                    GIT.append([g(it,t,Data) for t in range(Data.T)])
+                    sortedIndex.append(np.argsort(GIT[j]))
+                    Printing_weight.append(GIT[j][sortedIndex[j][1]]-GIT[j][sortedIndex[j][0]])
                     Printing_perferance.append(sortedIndex[j][0])
                 
                 
                 b.printing_weight=np.mean(Printing_weight)
+
                 # the printing preference of the bin decides when a bin should printed
                 # we obtain bin printing preference equal to the printing perfernce of the most urgent item in the bin
-                b.printing_preference = Printing_perferance[np.argmax(Printing_weight)]
+                most_urgent_value = max(Printing_weight)
+                indices = [i for i, x in enumerate(Printing_weight) if x == most_urgent_value]
+                if len(indices) == 1:
+                    b.printing_preference = Printing_perferance[indices[0]]
+                else:
+                    good_days = set([a for a in sortedIndex[indices[0]] if GIT[0][a] != Data.T])
+                    for i in indices[1:]:
+                        good_days = good_days.intersection(set([a for a in sortedIndex[i] if GIT[i][a] != Data.T]))
+
+                    if len(good_days) == 0:
+                        b.printing_preference = Printing_perferance[indices[0]]
+                    else:
+                        b.printing_preference = list(good_days)[0]
+
                 Qi.append(b.printing_weight)
                     
             Bin2assign=np.argmax(Qi)
             self.days[Bins[Bin2assign].printing_preference].addBin(Bins[Bin2assign])
             del Bins[Bin2assign]
 
+
+def g(item, day, Data):
+    if day < item.d-item.e:
+        return Data.T
+    elif day <= item.d:
+        return item.d-day
+    elif day <= item.d+item.l:
+        return day-item.d
+    elif day > item.d+item.l:
+        return Data.T

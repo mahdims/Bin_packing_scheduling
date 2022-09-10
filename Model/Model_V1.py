@@ -247,36 +247,45 @@ def Draw_Bins(Data,alphavv,betavv,gammavv):
             print("Printing Quqntity: %s" %bi.quantity)
             print("Revolting Bin= %d" % bi.Revolta)  
     return     
-    
+
+
+def check_if_there(FName):
+    Output_path = "C:\Users\generic\Dropbox\APA printing\Code\Model\Output"
+    FName = FName + "_ModelSol"
+    flag = os.path.isfile(Output_path + FName)
+    return flag
     
 N = 12
 T=3
 results= []
-for N in range(14, 17):
-    for name in ['Tlos', 'Tstr']:
-        for rep in [0]:  # range(1,2):
-            FileName="Data_%d_%d_%d_%s" %(N,T,rep,name)
-            print(FileName)
-            Data= read_object(FileName,"Input")
-            start=time.time()
+Ns =[5, 7, 10]#, 7, 10, 13, 15]
+for T in [1, 3]:
+    for N in Ns:  # range(15, 17):
+        for TW in ['WL', 'WS']:
+            for PC in ["PL", "PS"]:
+                for rep in range(5):
+                    FileName = 'Data_%d_%d_%s_%s_%d' %(T, N, TW, PC, rep)
+                    Data = read_object(FileName, "Input")
+                    FileName += "_NoSplit"
+                    if check_if_there(FileName):
+                        print("I solved %s before" % FileName)
+                        continue
+                    start = time.time()
+                    MIP, alpha, beta, gamma, x, P, tp, tn, Revolt = Solve()
+                    # Draw_Bins(Data,alpha,beta,gamma)
+                    runtime = time.time()-start
+                    objval = MIP.objVal
+                    lowerbound = MIP.ObjBound
+                    lowerbound2 = []
+                    print("%s %s %s %s" % (FileName, lowerbound, objval, runtime))
+                    out=Output([], [], alpha, beta, gamma, x, P, Revolt, objval, lowerbound, lowerbound2, runtime, tn, tp)
+                    save_object(out, FileName)
+                    results.append([N, T, TW, PC, rep, round(objval, 1), round(lowerbound,1), round(runtime, 1)])
+            #print("Lower Bound: %s" %lower_bound(Data))
+            #print("Total cost of printing all bins: %s" %Best_Sol.total_cost)
+            #print("Total lateness and earliness: %s" %Best_Sol.early_lateness)
+            #print("Number of Bins: %s" %len(Best_Sol.Bins))
+            #print ("Algorithm Run Time: %s" %Runtime)
 
-            MIP, alpha,beta,gamma,x,P,tp,tn,Revolt=Solve()
-
-            #Draw_Bins(Data,alpha,beta,gamma)
-            runtime=time.time()-start
-            print(MIP.objVal,runtime)
-            objval = MIP.objVal
-            lowerbound = MIP.ObjBound
-            lowerbound2 = []
-            FileName+="_NoSplit"
-            #out=Output([],[],alpha,beta,gamma,x,P,Revolt,objval,lowerbound,lowerbound2,runtime,tn,tp)
-            #save_object(out,FileName)
-            results.append([N, T, name, rep, round(objval, 1), round(lowerbound,1), round(runtime, 1)])
-    #print("Lower Bound: %s" %lower_bound(Data))
-    #print("Total cost of printing all bins: %s" %Best_Sol.total_cost)
-    #print("Total lateness and earliness: %s" %Best_Sol.early_lateness)
-    #print("Number of Bins: %s" %len(Best_Sol.Bins))
-    #print ("Algorithm Run Time: %s" %Runtime)
-
-results = pd.DataFrame(results, columns=['N', 'T', 'Mode', 'index', 'UB', 'LB', 'Time'])
-results.to_csv("Model_NoSplit_New.csv")
+results = pd.DataFrame(results, columns=['N', 'T', 'TW', 'PC', 'index', 'UB', 'LB', 'Time'])
+results.to_csv("Model_NoSplit_5_7_10.csv")
