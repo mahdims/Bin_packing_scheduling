@@ -56,7 +56,7 @@ Don't forget to give the project a star! Thanks again!
 <!-- LICENSE -->
 ## License
 
-It is distributed under the MIT License. See `LICENSE.txt` for more information.
+It is distributed under the  GPL-3.0 License. See `LICENSE.txt` for more information.
 
 
 
