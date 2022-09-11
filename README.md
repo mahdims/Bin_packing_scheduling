@@ -49,7 +49,7 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 
 
 
@@ -58,7 +58,7 @@ Don't forget to give the project a star! Thanks again!
 
 It is distributed under the MIT License. See `LICENSE.txt` for more information.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 
 
 
@@ -69,4 +69,4 @@ Your Name - [mahdi.ms86@gmail.com](mahdi.ms86@gmail.com)
 
 Project Link: [github.com/mahdims/2D-Bin-packing](https://github.com/mahdims/2D-Bin-packing)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
