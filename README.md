@@ -32,7 +32,7 @@ python3 runner.py <RGA,UGA> <inputFile> --rep <int> --draw
 * The optional flag `--draw`, if given, the algorithm will print detailed information about the best solution and draw the layout of the bin. 
 
 
-## Paramter
+## Parameters
 The algorithm parameters are tuned using a subset of generated instances. However, if you wish to change their values, refer to the `Parameters` class (line 15 runner.py file). 
 
 <!-- CONTRIBUTING -->
