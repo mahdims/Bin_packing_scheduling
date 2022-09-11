@@ -1,11 +1,10 @@
 \Solution compare
-\V1
-\midel
+\Old_versions
+\Files
 \.idea
 *.xlsx
 *.rar
 *.pyc
-test.py
 *.gdx
 *.lst
 *.~gm
@@ -13,6 +12,5 @@ test.py
 *.lst
 *.lxi
 *.gpr
-gamslice.txt
-gamslice3.txt
+*.png
 
