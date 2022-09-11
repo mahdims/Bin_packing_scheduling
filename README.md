@@ -67,6 +67,6 @@ It is distributed under the  GPL-3.0 License. See `LICENSE` for more information
 
 Mahdi Mostajabdaveh - [mahdi.ms86@gmail.com](mahdi.ms86@gmail.com)
 
-Project Link: [github.com/mahdims/2D-Bin-packing](https://github.com/mahdims/2D-Bin-packing)
+Project Link: [github.com/mahdims/Bin_packing_scheduling](https://github.com/mahdims/Bin_packing_scheduling)
 
 
